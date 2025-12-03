@@ -109,7 +109,7 @@ export const streamChatResponse = async (
   }
 };
 
-export const transcribeAudio = async (audioBase64: string): Promise<string> => {
+export const transcribeAudio = async (audioBase64: string, mimeType: string = 'audio/wav'): Promise<string> => {
   const client = initializeAI();
   if (!client) throw new Error("AI not init");
 
@@ -117,7 +117,7 @@ export const transcribeAudio = async (audioBase64: string): Promise<string> => {
     model: 'gemini-2.5-flash',
     contents: {
       parts: [
-        { inlineData: { mimeType: 'audio/wav', data: audioBase64 } }, // Assuming WAV/WebM container but raw data usage
+        { inlineData: { mimeType: mimeType, data: audioBase64 } },
         { text: "Transcribe the spoken audio exactly. Return only the text." }
       ]
     }
@@ -161,12 +161,6 @@ export const decodeAudioData = async (
   arrayBuffer: ArrayBuffer,
   audioContext: AudioContext
 ): Promise<AudioBuffer> => {
-   // The Live API returns raw PCM, but the TTS endpoint (gemini-2.5-flash-preview-tts) 
-   // usually returns a container format (WAV/MP3) wrapped in the response?
-   // Actually, the docs for TTS say "The audio bytes returned by the API is raw PCM data. It is not a standard file format...".
-   // However, the example code for TTS shows `decodeAudioData(decode(base64), ctx, 24000, 1)`.
-   // Let's implement the PCM decoder manually as per the instructions.
-
    const dataInt16 = new Int16Array(arrayBuffer);
    const sampleRate = 24000; // Standard for Gemini TTS
    const numChannels = 1;
