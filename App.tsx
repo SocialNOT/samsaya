@@ -36,7 +36,7 @@ function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-full bg-skin-fill text-skin-base overflow-hidden transition-colors duration-300">
+    <div className="flex flex-col h-[100dvh] w-full bg-skin-fill text-skin-base overflow-hidden transition-colors duration-300">
       
       {/* Header / Top Bar */}
       <header className="h-14 border-b border-skin-border flex items-center justify-center relative px-6 bg-skin-fill z-30 shrink-0">
@@ -93,7 +93,8 @@ function App() {
       </header>
 
       {/* Main Grid Layout */}
-      <main className="flex-1 grid grid-cols-1 md:grid-cols-12 h-full overflow-hidden relative">
+      {/* Added min-h-0 to allow proper flex shrinking/scrolling on mobile */}
+      <main className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-12 h-full relative">
         
         {/* Left Panel: Syllabus */}
         <aside className={`${mobileTab === 'syllabus' ? 'block' : 'hidden'} md:block md:col-span-3 border-r border-skin-border bg-skin-fill-panel/50 p-6 overflow-hidden h-full`}>
@@ -101,7 +102,7 @@ function App() {
         </aside>
 
         {/* Center: Console */}
-        <section className={`${mobileTab === 'console' ? 'block' : 'hidden'} md:block md:col-span-6 flex flex-col h-full border-r border-skin-border`}>
+        <section className={`${mobileTab === 'console' ? 'block' : 'hidden'} md:block md:col-span-6 flex flex-col h-full min-h-0 border-r border-skin-border`}>
           <ChatConsole 
             messages={messages} 
             setMessages={setMessages} 
@@ -118,7 +119,7 @@ function App() {
       </main>
 
       {/* Mobile Nav Footer */}
-      <footer className="md:hidden h-16 border-t border-skin-border bg-skin-fill-panel flex justify-around items-center px-4 shrink-0">
+      <footer className="md:hidden h-16 border-t border-skin-border bg-skin-fill-panel flex justify-around items-center px-4 shrink-0 z-40 relative">
          <button 
             onClick={() => setMobileTab('syllabus')} 
             className={`p-2 flex flex-col items-center gap-1 ${mobileTab === 'syllabus' ? 'text-skin-accent' : 'text-skin-muted'}`}
