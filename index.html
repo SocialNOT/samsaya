@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gemini-Saṃśaya Console</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              serif: ['"Cormorant Garamond"', 'serif'],
+              mono: ['"JetBrains Mono"', 'monospace'],
+            },
+            colors: {
+              skin: {
+                fill: 'rgb(var(--color-fill) / <alpha-value>)',
+                'fill-panel': 'rgb(var(--color-fill-panel) / <alpha-value>)',
+                'fill-element': 'rgb(var(--color-fill-element) / <alpha-value>)',
+                base: 'rgb(var(--color-text-base) / <alpha-value>)',
+                muted: 'rgb(var(--color-text-muted) / <alpha-value>)',
+                accent: 'rgb(var(--color-accent) / <alpha-value>)',
+                border: 'rgb(var(--color-border) / <alpha-value>)',
+              },
+              slate: {
+                850: '#151e2e',
+                900: '#0f172a',
+                950: '#020617',
+              },
+              gold: {
+                50: '#fffbeb',
+                100: '#fef3c7',
+                200: '#fde68a',
+                300: '#fcd34d',
+                400: '#fbbf24',
+                500: '#f59e0b',
+                600: '#d97706',
+                700: '#b45309',
+                800: '#92400e',
+                900: '#78350f',
+                950: '#451a03',
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      :root {
+        /* Scholarly Dark (Default) */
+        --color-fill: 2 6 23;          /* #020617 */
+        --color-fill-panel: 15 23 42;  /* #0f172a */
+        --color-fill-element: 30 41 59;/* #1e293b */
+        --color-text-base: 226 232 240;/* #e2e8f0 */
+        --color-text-muted: 148 163 184;/* #94a3b8 */
+        --color-accent: 245 158 11;    /* #f59e0b (Amber-500) */
+        --color-border: 30 41 59;      /* #1e293b */
+      }
+
+      /* Theme: Scholarly */
+      [data-theme='scholarly'][data-mode='light'] {
+        --color-fill: 253 251 247;     /* #fdfbf7 (Cream) */
+        --color-fill-panel: 248 245 238;/* #f8f5ee */
+        --color-fill-element: 235 230 220;/* #ebe6dc */
+        --color-text-base: 15 23 42;    /* #0f172a (Slate-900) */
+        --color-text-muted: 71 85 105;  /* #475569 (Slate-600) */
+        --color-accent: 180 83 9;       /* #b45309 (Amber-700) - Darker for readability */
+        --color-border: 203 213 225;    /* #cbd5e1 */
+      }
+
+      /* Theme: Minimalist */
+      [data-theme='minimalist'][data-mode='dark'] {
+        --color-fill: 23 23 23;        /* #171717 */
+        --color-fill-panel: 38 38 38;  /* #262626 */
+        --color-fill-element: 64 64 64;/* #404040 */
+        --color-text-base: 245 245 245;/* #f5f5f5 */
+        --color-text-muted: 163 163 163;/* #a3a3a3 */
+        --color-accent: 59 130 246;    /* #3b82f6 (Blue-500) */
+        --color-border: 64 64 64;      /* #404040 */
+      }
+      [data-theme='minimalist'][data-mode='light'] {
+        --color-fill: 255 255 255;     /* #ffffff */
+        --color-fill-panel: 245 245 245;/* #f5f5f5 */
+        --color-fill-element: 229 229 229;/* #e5e5e5 */
+        --color-text-base: 23 23 23;    /* #171717 */
+        --color-text-muted: 82 82 82;   /* #525252 */
+        --color-accent: 37 99 235;      /* #2563eb (Blue-600) */
+        --color-border: 212 212 212;    /* #d4d4d4 */
+      }
+
+      /* Theme: Manuscript */
+      [data-theme='manuscript'][data-mode='dark'] {
+        --color-fill: 39 32 27;        /* #27201b */
+        --color-fill-panel: 46 38 33;  /* #2e2621 */
+        --color-fill-element: 61 52 46;/* #3d342e */
+        --color-text-base: 234 221 207;/* #eaddcf */
+        --color-text-muted: 168 159 145;/* #a89f91 */
+        --color-accent: 194 162 133;   /* #c2a285 */
+        --color-border: 74 64 58;      /* #4a403a */
+      }
+      [data-theme='manuscript'][data-mode='light'] {
+        --color-fill: 245 230 211;     /* #f5e6d3 */
+        --color-fill-panel: 235 220 201;/* #ebdcc9 */
+        --color-fill-element: 220 200 176;/* #dcc8b0 */
+        --color-text-base: 74 59 42;    /* #4a3b2a */
+        --color-text-muted: 120 100 80; /* #786450 */
+        --color-accent: 140 80 30;      /* #8c501e */
+        --color-border: 200 180 160;    /* #c8b4a0 */
+      }
+
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: rgb(var(--color-fill-panel)); 
+        border-left: 1px solid rgb(var(--color-border));
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgb(var(--color-fill-element)); 
+        border-radius: 0px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgb(var(--color-text-muted)); 
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react-markdown": "https://esm.sh/react-markdown@9?bundle&external=react,react-dom"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-skin-fill text-skin-base font-serif h-screen overflow-hidden selection:bg-skin-accent/30 selection:text-skin-accent transition-colors duration-300">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

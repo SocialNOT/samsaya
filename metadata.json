@@ -1,0 +1,7 @@
+{
+  "name": "Saṃśaya",
+  "description": "A scholarly research console for Nyāya-Buddhist comparative epistemology, focusing on the concept of Saṃśaya (Doubt).",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
