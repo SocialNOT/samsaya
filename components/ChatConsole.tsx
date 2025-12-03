@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { ChatMessage, Attachment } from '../types';
@@ -28,20 +27,21 @@ const ChatConsole: React.FC<ChatConsoleProps> = ({ messages, setMessages, reques
   const [useSearch, setUseSearch] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
 
-  const scrollRef = useRef<HTMLDivElement>(null);
+  // We use a dummy div at the end of the list to scroll to
+  const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const recordingMimeTypeRef = useRef<string>('audio/webm');
 
   const scrollToBottom = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    // Scroll smoothly to the bottom ref
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isLoading]);
 
   useEffect(() => {
     if (requestedQuery && !isLoading && onQueryHandled) {
@@ -152,7 +152,17 @@ const ChatConsole: React.FC<ChatConsoleProps> = ({ messages, setMessages, reques
     } else {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorderRef.current = new MediaRecorder(stream);
+        
+        // Determine supported mime type
+        let mimeType = 'audio/webm'; // Fallback
+        if (typeof MediaRecorder.isTypeSupported === 'function') {
+             if (MediaRecorder.isTypeSupported('audio/webm')) mimeType = 'audio/webm';
+             else if (MediaRecorder.isTypeSupported('audio/mp4')) mimeType = 'audio/mp4';
+             else if (MediaRecorder.isTypeSupported('audio/wav')) mimeType = 'audio/wav';
+        }
+        
+        recordingMimeTypeRef.current = mimeType;
+        mediaRecorderRef.current = new MediaRecorder(stream, { mimeType });
         audioChunksRef.current = [];
 
         mediaRecorderRef.current.ondataavailable = (event) => {
@@ -160,17 +170,19 @@ const ChatConsole: React.FC<ChatConsoleProps> = ({ messages, setMessages, reques
         };
 
         mediaRecorderRef.current.onstop = async () => {
-          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+          const audioBlob = new Blob(audioChunksRef.current, { type: recordingMimeTypeRef.current });
           const reader = new FileReader();
           reader.readAsDataURL(audioBlob);
           reader.onloadend = async () => {
-            const base64Audio = (reader.result as string).split(',')[1];
+            const result = reader.result as string;
+            const base64Audio = result.split(',')[1];
             try {
               setIsLoading(true);
-              const text = await transcribeAudio(base64Audio);
+              const text = await transcribeAudio(base64Audio, recordingMimeTypeRef.current);
               setInput(prev => (prev ? prev + " " + text : text));
             } catch (err) {
               console.error("Transcription failed", err);
+              alert("Could not transcribe audio. Please try again.");
             } finally {
               setIsLoading(false);
             }
@@ -244,7 +256,7 @@ const ChatConsole: React.FC<ChatConsoleProps> = ({ messages, setMessages, reques
       <div className="absolute inset-0 pointer-events-none opacity-5 bg-[linear-gradient(currentColor_1px,transparent_1px),linear-gradient(90deg,currentColor_1px,transparent_1px)] bg-[size:40px_40px] text-skin-muted"></div>
 
       {/* Toolbar */}
-      <div className="flex items-center justify-center px-4 py-2 bg-skin-fill-panel/80 border-b border-skin-border gap-12 z-20">
+      <div className="flex items-center justify-center px-4 py-2 bg-skin-fill-panel/80 border-b border-skin-border gap-12 z-20 shrink-0">
         <label className="flex items-center gap-2 cursor-pointer group">
           <div className="relative">
             <input type="checkbox" checked={useThinking} onChange={(e) => setUseThinking(e.target.checked)} className="sr-only peer" />
@@ -265,7 +277,8 @@ const ChatConsole: React.FC<ChatConsoleProps> = ({ messages, setMessages, reques
       </div>
 
       {/* Output Display */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-8" ref={scrollRef}>
+      {/* min-h-0 is critical for nested flex scrolling */}
+      <div className="flex-1 min-h-0 overflow-y-auto p-4 md:p-6 pb-8 space-y-6 md:space-y-8 scroll-smooth">
         {messages.length === 0 && (
           <div className="h-full flex flex-col items-center justify-center text-skin-muted opacity-60">
             <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="square" strokeLinejoin="miter" className="mb-4">
@@ -301,7 +314,7 @@ const ChatConsole: React.FC<ChatConsoleProps> = ({ messages, setMessages, reques
              </div>
 
             <div 
-              className={`max-w-[85%] p-4 border ${
+              className={`max-w-[90%] md:max-w-[85%] p-4 border ${
                 msg.role === 'user' 
                   ? 'bg-skin-fill-element border-skin-border text-skin-base' 
                   : 'bg-skin-fill-panel/90 border-skin-accent/30 text-skin-base shadow-sm'
@@ -322,7 +335,7 @@ const ChatConsole: React.FC<ChatConsoleProps> = ({ messages, setMessages, reques
                 </div>
               )}
 
-              <div className="text-base leading-relaxed">
+              <div className="text-base leading-relaxed break-words">
                 <ReactMarkdown
                   components={{
                     p: ({node, ...props}) => <p className="mb-4 font-serif leading-relaxed last:mb-0" {...props} />,
@@ -333,9 +346,9 @@ const ChatConsole: React.FC<ChatConsoleProps> = ({ messages, setMessages, reques
                          const match = /language-(\w+)/.exec(className || '')
                          const isInline = !match && !String(children).includes('\n')
                          if (isInline) {
-                             return <code className="font-mono text-skin-accent bg-skin-fill px-1 py-0.5 rounded text-sm border border-skin-border" {...props}>{children}</code>
+                             return <code className="font-mono text-skin-accent bg-skin-fill px-1 py-0.5 rounded text-sm border border-skin-border whitespace-pre-wrap break-all" {...props}>{children}</code>
                          }
-                         return <code className="font-mono text-sm block bg-skin-fill p-2 rounded border border-skin-border my-2 overflow-x-auto text-skin-accent" {...props}>{children}</code>
+                         return <code className="font-mono text-sm block bg-skin-fill p-2 rounded border border-skin-border my-2 overflow-x-auto text-skin-accent whitespace-pre" {...props}>{children}</code>
                     },
                     blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-skin-accent pl-4 italic my-4 text-skin-muted bg-skin-fill/30 p-3 rounded-r border-y border-r border-skin-border/50" {...props} />,
                     ul: ({node, ...props}) => <ul className="list-disc list-inside mb-4 space-y-1 marker:text-skin-accent" {...props} />,
@@ -372,10 +385,12 @@ const ChatConsole: React.FC<ChatConsoleProps> = ({ messages, setMessages, reques
             </div>
           </div>
         ))}
+        {/* Scroll anchor */}
+        <div ref={bottomRef}></div>
       </div>
 
       {/* Input Area */}
-      <div className="p-4 border-t border-skin-border bg-skin-fill-panel relative z-20">
+      <div className="p-4 border-t border-skin-border bg-skin-fill-panel relative z-20 shrink-0">
         
         {/* Attachment Preview */}
         {attachments.length > 0 && (
